@@ -14,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.example.service.UserService;
-import com.example.entity.User;
+import com.example.entity.User as AppUser;
 
 /* 
  * JWT Authentication filter that validates JWT tokens on each request.
@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (jwtUtil.validateToken(token)) {
                     // Get user from database to get the actual role
-                    User dbUser = userService.findByEmail(email);
+                    AppUser dbUser = userService.findByEmail(email);
                     if (dbUser != null) {
                         String role = dbUser.getRole();
                         UserDetails user = User.withUsername(email)
