@@ -17,7 +17,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserServiceImpl userServiceImpl;
 
     /* 
-     * Loads user by email/username for authentication purposes.
+     * Loads user by email for authentication purposes.
      * Converts database User entity to Spring Security UserDetails format.
      * @param email The user's email address used as username
      * @return UserDetails object containing user credentials and authorities

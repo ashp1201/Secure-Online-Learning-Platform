@@ -9,8 +9,8 @@ public class UserDto {
 
     private Long userId;
 
-    @NotBlank(message = "Username is required")
-    private String username;
+    @NotBlank(message = "Full name is required")
+    private String fullName;
 
     
     @Email(message = "Provide a valid email address")
@@ -38,8 +38,8 @@ public class UserDto {
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

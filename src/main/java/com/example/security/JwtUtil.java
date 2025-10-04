@@ -17,26 +17,26 @@ public class JwtUtil {
     private static final long EXPIRATION = 3600000; // 1 hour in milliseconds
 
     /* 
-     * Generates a JWT token for the given username with expiration.
-     * Token includes subject (username) and expiration time, signed with secret key.
-     * @param username The username/email to embed in the token subject
+     * Generates a JWT token for the given email with expiration.
+     * Token includes subject (email) and expiration time, signed with secret key.
+     * @param email The email to embed in the token subject
      * @return String containing the signed JWT token
      */
-    public String generateToken(String username) {
+    public String generateToken(String email) {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(email)
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(KEY)
                 .compact();
     }
 
     /* 
-     * Extracts username from JWT token by parsing the subject claim.
+     * Extracts email from JWT token by parsing the subject claim.
      * Verifies token signature before extracting data.
      * @param token The JWT token string to parse
-     * @return String containing the username from token subject, or null if invalid
+     * @return String containing the email from token subject, or null if invalid
      */
-    public String getUsername(String token) {
+    public String getEmail(String token) {
         return Jwts.parser()
                 .setSigningKey(KEY)
                 .parseClaimsJws(token)

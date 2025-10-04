@@ -50,12 +50,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         /* Extract and validate JWT token from Authorization header */
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            String username = jwtUtil.getUsername(token);
-            System.out.println(username);
+            String email = jwtUtil.getEmail(token);
+            System.out.println(email);
             
             /* Set authentication in security context if token is valid */
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails user = User.withUsername(username)
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails user = User.withUsername(email)
                         .password("")  // password not needed here
                         .roles("USER")
                         .build();

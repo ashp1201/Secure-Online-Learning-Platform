@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setRole(role);
-        user.setUsername(userDto.getUsername());
+        user.setFullName(userDto.getFullName());
         user.setEmail(userDto.getEmail());
         user.setPasswordHash(userDto.getPassword()); // password encoding handled in DAO save
 
@@ -120,7 +120,7 @@ public class UserServiceImpl implements UserService {
 
         Map<String, String> response = new HashMap<>();
         response.put("email", user.getEmail());
-        response.put("username", user.getUsername());
+        response.put("fullName", user.getFullName());
         response.put("role", user.getRole());
 
         return ResponseEntity.ok(response);
