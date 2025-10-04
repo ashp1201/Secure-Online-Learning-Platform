@@ -1,0 +1,34 @@
+Objective 
+ Build a secure platform where instructors can upload courses and students can enroll and track progress. 
+
+Technical Requirements 
+
+Spring MVC + Hibernate + PostgreSQL 
+
+JWT Authentication 
+
+REST APIs returning JSON 
+
+File upload (for course content) 
+
+Criteria Queries for course filtering (e.g., category, difficulty) 
+
+Core Requirements 
+
+Roles: INSTRUCTOR, STUDENT 
+
+Instructor: Create/update courses 
+
+Student: Browse/enroll in courses 
+
+Progress tracking 
+
+Entities 
+
+User 
+
+Course 
+
+Enrollment 
+
+Progress 
