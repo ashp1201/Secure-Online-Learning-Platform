@@ -1,10 +1,11 @@
 package com.example.service;
 
 import com.example.dto.ProgressDto;
-import com.example.entity.Progress;
 import java.util.List;
 
 public interface ProgressService {
-    Progress updateProgress(ProgressDto dto);
-    List<Progress> getProgressByEnrollment(Long enrollmentId);
+    ProgressDto addProgress(ProgressDto progressDto, Long enrollmentId);
+    List<ProgressDto> getProgressByEnrollment(Long enrollmentId);
+    void updateProgress(ProgressDto progressDto);
+    void deleteProgress(Long progressId);
 }

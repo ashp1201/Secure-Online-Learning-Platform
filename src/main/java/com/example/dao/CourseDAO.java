@@ -5,7 +5,9 @@ import java.util.List;
 
 public interface CourseDAO {
     void save(Course course);
+    void update(Course course);
+    void delete(Long courseId);
     Course findById(Long id);
     List<Course> findAll();
-    List<Course> filterByCategoryAndDifficulty(String category, String difficulty);
+    List<Course> findByInstructorId(Long instructorId);
 }

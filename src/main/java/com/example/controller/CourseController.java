@@ -1,37 +1,46 @@
-//package com.example.controller;
-//
-//import com.example.dto.CourseDto;
-//import com.example.entity.Course;
-//import com.example.service.CourseService;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//import org.springframework.web.multipart.MultipartFile;
-//
-//import java.util.List;
-//
-//@RestController
-//@RequestMapping("/courses")
-//public class CourseController {
-//
-//    @Autowired
-//    private CourseService courseService;
-//
-//    @PostMapping("/create")
-//    public ResponseEntity<Course> createCourse(@ModelAttribute CourseDto dto,
-//                                               @RequestParam("file") MultipartFile file,
-//                                               @RequestParam("instructorId") Long instructorId) {
-//        return ResponseEntity.ok(courseService.createCourse(dto, file, instructorId));
-//    }
-//
-//    @GetMapping
-//    public ResponseEntity<List<Course>> getAllCourses() {
-//        return ResponseEntity.ok(courseService.getAllCourses());
-//    }
-//
-//    @GetMapping("/filter")
-//    public ResponseEntity<List<Course>> filterCourses(@RequestParam(required = false) String category,
-//                                                      @RequestParam(required = false) String difficulty) {
-//        return ResponseEntity.ok(courseService.filterCourses(category, difficulty));
-//    }
-//}
+package com.example.controller;
+
+import com.example.dto.CourseDto;
+import com.example.entity.User;
+import com.example.service.CourseService;
+import com.example.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/courses")
+public class CourseController {
+
+    @Autowired
+    private CourseService courseService;
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/create")
+    public ResponseEntity<CourseDto> createCourse(@RequestBody CourseDto dto, Authentication authentication) {
+        User user = userService.findByEmail(authentication.getName());
+        return ResponseEntity.ok(courseService.createCourse(dto, user.getUserId()));
+    }
+
+    @GetMapping("/instructor/my-courses")
+    public ResponseEntity<List<CourseDto>> getInstructorCourses(Authentication authentication) {
+        User user = userService.findByEmail(authentication.getName());
+        return ResponseEntity.ok(courseService.getCoursesByInstructor(user.getUserId()));
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<CourseDto>> getAllCourses() {
+        return ResponseEntity.ok(courseService.getAllCourses());
+    }
+
+    @DeleteMapping("/{courseId}")
+    public ResponseEntity<?> deleteCourse(@PathVariable Long courseId) {
+        courseService.deleteCourse(courseId);
+        return ResponseEntity.ok().build();
+    }
+}

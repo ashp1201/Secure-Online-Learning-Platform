@@ -5,6 +5,9 @@ import java.util.List;
 
 public interface EnrollmentDAO {
     void save(Enrollment enrollment);
+    void update(Enrollment enrollment);
+    void delete(Long enrollmentId);
     Enrollment findById(Long id);
-    List<Enrollment> findByStudent(Long studentId);
+    List<Enrollment> findByStudentId(Long studentId);
+    List<Enrollment> findByCourseInstructorId(Long instructorId);
 }
