@@ -48,14 +48,14 @@ public class CourseDaoImpl implements CourseDAO {
     @Override
     public List<Course> findAll() {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course", Course.class).getResultList()
+            session.createQuery("FROM Course c LEFT JOIN FETCH c.instructor", Course.class).getResultList()
         );
     }
 
     @Override
     public List<Course> findByInstructorId(Long instructorId) {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course c WHERE c.instructor.userId = :id", Course.class)
+            session.createQuery("FROM Course c LEFT JOIN FETCH c.instructor WHERE c.instructor.userId = :id", Course.class)
                 .setParameter("id", instructorId)
                 .getResultList()
         );

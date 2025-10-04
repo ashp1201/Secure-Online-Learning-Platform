@@ -24,7 +24,8 @@ import com.example.service.UserService;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil = new JwtUtil();
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Autowired
     private UserService userService;

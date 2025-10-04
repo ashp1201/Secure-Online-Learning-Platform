@@ -30,6 +30,7 @@ public class FileUploadController {
     @PostMapping("/course-content")
     public ResponseEntity<Map<String, Object>> uploadCourseContent(
             @RequestParam("file") MultipartFile file,
+            @RequestParam("courseName") String courseName,
             Authentication authentication) {
         
         User user = userService.findByEmail(authentication.getName());
@@ -38,7 +39,12 @@ public class FileUploadController {
         }
 
         try {
-            String instructorUploadPath = uploadPath + "/instructors/" + user.getUserId() + "/courses";
+            // Create folder structure: C:/fakepath/useremail/coursename/filename.mp4
+            String userEmail = user.getEmail().replace("@", "_").replace(".", "_");
+            String courseFolderName = courseName.replaceAll("[^a-zA-Z0-9]", "_");
+            String instructorUploadPath = "C:/fakepath/" + userEmail + "/" + courseFolderName;
+            
+            System.out.println("Creating folder structure: " + instructorUploadPath);
             String filePath = fileUploadService.uploadFile(file, instructorUploadPath);
             
             Map<String, Object> response = new HashMap<>();
@@ -46,9 +52,12 @@ public class FileUploadController {
             response.put("filePath", filePath);
             response.put("fileName", file.getOriginalFilename());
             response.put("fileSize", fileUploadService.getFileSize(file));
+            response.put("uploadPath", instructorUploadPath);
+            response.put("message", "File uploaded successfully to: " + instructorUploadPath);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.err.println("Upload error: " + e.getMessage());
             return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
         }
     }

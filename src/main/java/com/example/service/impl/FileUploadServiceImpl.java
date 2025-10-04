@@ -43,6 +43,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             Path uploadDir = Paths.get(uploadPath);
             if (!Files.exists(uploadDir)) {
                 Files.createDirectories(uploadDir);
+                System.out.println("Created directory structure: " + uploadDir.toAbsolutePath());
             }
 
             // Generate unique filename

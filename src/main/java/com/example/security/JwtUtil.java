@@ -7,11 +7,13 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
 
 /* 
  * Utility class for JWT token operations including generation, validation, and parsing.
  * Uses HS256 algorithm with securely generated key for token signing.
  */
+@Component
 public class JwtUtil {
     private static final Key KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private static final long EXPIRATION = 3600000; // 1 hour in milliseconds
