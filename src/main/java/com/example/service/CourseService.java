@@ -1,13 +1,17 @@
 package com.example.service;
 
 import com.example.dto.CourseDto;
-import com.example.entity.Course;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 public interface CourseService {
-    Course createCourse(CourseDto courseDto, MultipartFile file, Long instructorId);
-    List<Course> getAllCourses();
-    List<Course> filterCourses(String category, String difficulty);
+    CourseDto createCourse(CourseDto dto, Long instructorId);
+    CourseDto updateCourse(CourseDto dto, Long courseId, Long instructorId);
+    List<CourseDto> getCoursesByInstructor(Long instructorId);
+    List<CourseDto> getAllCourses();
+    List<CourseDto> getCoursesByCategory(String category);
+    List<CourseDto> getCoursesByDifficulty(String difficulty);
+    List<CourseDto> getCoursesByCategoryAndDifficulty(String category, String difficulty);
+    List<CourseDto> searchCoursesByTitle(String title);
+    CourseDto getCourseById(Long courseId);
+    void deleteCourse(Long courseId);
 }
