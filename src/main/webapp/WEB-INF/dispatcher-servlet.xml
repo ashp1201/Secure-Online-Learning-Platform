@@ -25,6 +25,8 @@
 	<security:http pattern="/index.jsp" security="none"/>
 	<security:http pattern="/error.jsp" security="none"/>
 	<security:http pattern="/users/*" security="none"/>
+		<security:http pattern="/studentDashboard" security="none"/>
+	<security:http pattern="/instructorDashboard" security="none"/>
  
 	<!-- Protect API endpoints and dashboard pages with JWT authentication -->
 	<security:http entry-point-ref="jwtAuthEntryPoint">
@@ -33,8 +35,7 @@
 		<security:intercept-url pattern="/enrollments/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
 		<security:intercept-url pattern="/progress/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
 		<security:intercept-url pattern="/upload/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
-		<security:intercept-url pattern="/studentDashboard" access="hasRole('STUDENT')"/>
-		<security:intercept-url pattern="/instructorDashboard" access="hasRole('INSTRUCTOR')"/>
+
 		<security:csrf disabled="true"/>
 	</security:http>
    
