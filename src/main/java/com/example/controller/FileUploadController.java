@@ -39,10 +39,11 @@ public class FileUploadController {
         }
 
         try {
-            // Create folder structure: C:/fakepath/useremail/coursename/filename.mp4
-            String userEmail = user.getEmail().replace("@", "_").replace(".", "_");
-            String courseFolderName = courseName.replaceAll("[^a-zA-Z0-9]", "_");
-            String instructorUploadPath = "C:/fakepath/" + userEmail + "/" + courseFolderName;
+            // New folder structure: C:/fakepath/useremail/useremail_coursename/filename.mp4
+            String userEmailSanitized = user.getEmail().replaceAll("[^a-zA-Z0-9]", "_");
+            String courseNameSanitized = courseName.replaceAll("[^a-zA-Z0-9]", "_");
+            String userCourseFolder = userEmailSanitized + "_" + courseNameSanitized;
+            String instructorUploadPath = "C:/fakepath/" + userEmailSanitized + "/" + userCourseFolder;
             
             System.out.println("Creating folder structure: " + instructorUploadPath);
             String filePath = fileUploadService.uploadFile(file, instructorUploadPath);

@@ -30,7 +30,7 @@ public class Course {
     @JsonBackReference
     private User instructor;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<Enrollment> enrollments;
 

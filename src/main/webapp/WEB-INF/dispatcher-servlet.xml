@@ -49,6 +49,10 @@
     <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
 		<constructor-arg value="12"/>
 		</bean>
+		
+		
+<bean id="multipartResolver" class="org.springframework.web.multipart.support.StandardServletMultipartResolver"/>
+	
     
     <!-- Authentication manager -->
     <security:authentication-manager alias="authenticationManager">

@@ -11,4 +11,5 @@ public interface EnrollmentService {
     List<EnrollmentDto> getEnrollmentsByInstructor(Long instructorId);
     
     Enrollment findById(Long enrollmentId);
+	boolean isStudentEnrolled(Long userId, Long courseId);
 }

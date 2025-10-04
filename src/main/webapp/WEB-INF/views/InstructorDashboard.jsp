@@ -463,12 +463,35 @@
                     submitText.html('<span class="loading"></span>Creating Course...');
                     showAlert('', '');
 
+                    const fileInput = $("#contentPath")[0];
+                    const file = fileInput.files && fileInput.files[0];
+
+                    // If file was selected, upload it first
+                    if (file) {
+                        uploadCourseFile(file, $("#courseTitle").val().trim(), function(err, uploadedFilePath) {
+                            if (err) {
+                                showAlert(err, 'error');
+                                submitBtn.prop("disabled", false);
+                                submitText.html('<i class="fas fa-save"></i> Create Course');
+                                return;
+                            }
+                            submitCourseForm(uploadedFilePath);
+                        });
+                    } else {
+                        submitCourseForm(null);
+                    }
+                }
+
+                function submitCourseForm(filePath) {
+                    const submitBtn = $("#submitBtn");
+                    const submitText = $("#submitText");
+
                     const courseData = {
                         title: $("#courseTitle").val().trim(),
                         description: $("#description").val().trim(),
                         category: $("#category").val(),
                         difficulty: $("#difficulty").val(),
-                        contentPath: $("#contentPath").val() || null
+                        contentPath: filePath // the actual physical server path or null
                     };
 
                     $.ajax({
@@ -477,21 +500,22 @@
                         contentType: "application/json",
                         headers: { "Authorization": "Bearer " + authToken },
                         data: JSON.stringify(courseData),
-                        success: function () {
+                        success: function() {
                             showAlert('Course created successfully!', 'success');
                             $("#courseForm")[0].reset();
                             loadMyCourses();
                             setTimeout(() => showTab('my-courses'), 2000);
                         },
-                        error: function (xhr) {
+                        error: function(xhr) {
                             showAlert(xhr.responseText || 'Failed to create course', 'error');
                         },
-                        complete: function () {
+                        complete: function() {
                             submitBtn.prop("disabled", false);
                             submitText.html('<i class="fas fa-save"></i> Create Course');
                         }
                     });
                 }
+
 
                 function showAlert(message, type) {
                     const alertContainer = $("#alertContainer");
@@ -552,6 +576,28 @@
                         }
                     });
                 }
+                
+                function uploadCourseFile(file, courseName, callback) {
+                    var formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('courseName', courseName);
+
+                    $.ajax({
+                        url: "/Secure-Online-Learning-Platform/upload/course-content",
+                        method: "POST",
+                        headers: { "Authorization": "Bearer " + authToken },
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            callback(null, response.filePath); // path returned by backend
+                        },
+                        error: function(xhr) {
+                            callback(xhr.responseText || 'Failed to upload file');
+                        }
+                    });
+                }
+
 
                 function loadEnrollments() {
                     const enrollmentsList = $("#enrollmentsList");
