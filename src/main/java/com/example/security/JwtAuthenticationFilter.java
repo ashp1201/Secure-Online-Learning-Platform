@@ -6,19 +6,27 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.example.service.UserService;
+import com.example.entity.User;
 
 /* 
  * JWT Authentication filter that validates JWT tokens on each request.
  * Extracts JWT from Authorization header and sets authentication in security context.
  */
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil = new JwtUtil();
+    
+    @Autowired
+    private UserService userService;
 
     /* 
      * Filters incoming HTTP requests to validate JWT tokens.
@@ -55,15 +63,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             /* Set authentication in security context if token is valid */
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails user = User.withUsername(email)
-                        .password("")  // password not needed here
-                        .roles("USER")
-                        .build();
-
                 if (jwtUtil.validateToken(token)) {
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    // Get user from database to get the actual role
+                    User dbUser = userService.findByEmail(email);
+                    if (dbUser != null) {
+                        String role = dbUser.getRole();
+                        UserDetails user = User.withUsername(email)
+                                .password("")  // password not needed here
+                                .roles(role)
+                                .build();
+
+                        UsernamePasswordAuthenticationToken auth =
+                                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    }
                 }
             }
         }

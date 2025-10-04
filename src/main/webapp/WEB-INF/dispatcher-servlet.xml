@@ -17,11 +17,21 @@
 
 	 
 	 
-	 <security:http pattern="/auth/*" security="none"/>
-	<security:http pattern="/*" security="none"/>
+	<!-- Security configuration -->
+	<security:http pattern="/auth/*" security="none"/>
+	<security:http pattern="/register" security="none"/>
+	<security:http pattern="/users/*" security="none"/>
  
-    
-     <!-- Protect all other endpoints -->
+	<!-- Protect all other endpoints with JWT authentication -->
+	<security:http entry-point-ref="jwtAuthEntryPoint">
+		<security:custom-filter ref="jwtFilter" position="PRE_AUTH_FILTER"/>
+		<security:intercept-url pattern="/courses/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
+		<security:intercept-url pattern="/enrollments/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
+		<security:intercept-url pattern="/progress/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
+		<security:intercept-url pattern="/upload/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
+		<security:intercept-url pattern="/test/**" access="hasRole('INSTRUCTOR') or hasRole('STUDENT')"/>
+		<security:csrf disabled="true"/>
+	</security:http>
    
     
     <!-- JWT Authentication Filter Bean -->
