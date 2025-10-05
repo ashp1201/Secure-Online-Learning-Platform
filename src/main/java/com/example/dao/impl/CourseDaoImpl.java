@@ -41,7 +41,12 @@ public class CourseDaoImpl implements CourseDAO {
     @Override
     public Course findById(Long id) {
         return hibernateUtil.executeReadOnly(session ->
-            session.get(Course.class, id)
+            session.createQuery(
+                "SELECT c FROM Course c " +
+                "LEFT JOIN FETCH c.instructor " +
+                "WHERE c.courseId = :id", Course.class)
+                .setParameter("id", id)
+                .uniqueResult()
         );
     }
 
@@ -66,10 +71,14 @@ public class CourseDaoImpl implements CourseDAO {
 
 
 
+
     @Override
     public List<Course> findByCategory(String category) {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course c WHERE c.category = :category", Course.class)
+            session.createQuery(
+                "SELECT c FROM Course c " +
+                "LEFT JOIN FETCH c.instructor " + // ADD THIS!
+                "WHERE c.category = :category", Course.class)
                 .setParameter("category", category)
                 .getResultList()
         );
@@ -78,7 +87,10 @@ public class CourseDaoImpl implements CourseDAO {
     @Override
     public List<Course> findByDifficulty(String difficulty) {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course c WHERE c.difficulty = :difficulty", Course.class)
+            session.createQuery(
+                "SELECT c FROM Course c " +
+                "LEFT JOIN FETCH c.instructor " + // ADD THIS!
+                "WHERE c.difficulty = :difficulty", Course.class)
                 .setParameter("difficulty", difficulty)
                 .getResultList()
         );
@@ -87,7 +99,10 @@ public class CourseDaoImpl implements CourseDAO {
     @Override
     public List<Course> findByCategoryAndDifficulty(String category, String difficulty) {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course c WHERE c.category = :category AND c.difficulty = :difficulty", Course.class)
+            session.createQuery(
+                "SELECT c FROM Course c " +
+                "LEFT JOIN FETCH c.instructor " + // ADD THIS!
+                "WHERE c.category = :category AND c.difficulty = :difficulty", Course.class)
                 .setParameter("category", category)
                 .setParameter("difficulty", difficulty)
                 .getResultList()

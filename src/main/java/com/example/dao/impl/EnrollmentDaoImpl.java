@@ -42,25 +42,60 @@ public class EnrollmentDaoImpl implements EnrollmentDAO {
     @Override
     public Enrollment findById(Long id) {
         return hibernateUtil.executeReadOnly(session ->
-            session.get(Enrollment.class, id)
+            session.createQuery(
+                "SELECT e FROM Enrollment e " +
+                "LEFT JOIN FETCH e.student " +
+                "LEFT JOIN FETCH e.course c " +
+                "LEFT JOIN FETCH c.instructor " +
+                "WHERE e.enrollmentId = :id", Enrollment.class)
+                .setParameter("id", id)
+                .uniqueResult()
         );
     }
+
 
     @Override
     public List<Enrollment> findByStudentId(Long studentId) {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Enrollment e WHERE e.student.userId = :sid", Enrollment.class)
+            session.createQuery(
+                "SELECT e FROM Enrollment e " +
+                "LEFT JOIN FETCH e.student " +
+                "LEFT JOIN FETCH e.course c " +
+                "LEFT JOIN FETCH c.instructor " +
+                "WHERE e.student.userId = :sid", Enrollment.class)
                 .setParameter("sid", studentId)
                 .getResultList()
         );
     }
 
+
+
+
     @Override
     public List<Enrollment> findByCourseInstructorId(Long instructorId) {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("SELECT e FROM Enrollment e JOIN e.course c WHERE c.instructor.userId = :iid", Enrollment.class)
+            session.createQuery(
+                "SELECT e FROM Enrollment e " +
+                "LEFT JOIN FETCH e.student s " +
+                "LEFT JOIN FETCH e.course c " +
+                "LEFT JOIN FETCH c.instructor i " + // very important!
+                "WHERE c.instructor.userId = :iid", Enrollment.class)
                 .setParameter("iid", instructorId)
                 .getResultList()
         );
     }
+
+    @Override
+    public Enrollment findByStudentAndCourse(Long studentId, Long courseId) {
+        return hibernateUtil.executeReadOnly(session ->
+            session.createQuery(
+                "FROM Enrollment e WHERE e.student.userId = :studentId AND e.course.courseId = :courseId",
+                Enrollment.class
+            )
+            .setParameter("studentId", studentId)
+            .setParameter("courseId", courseId)
+            .uniqueResult()
+        );
+    }
+
 }

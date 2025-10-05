@@ -10,4 +10,6 @@ public interface EnrollmentDAO {
     Enrollment findById(Long id);
     List<Enrollment> findByStudentId(Long studentId);
     List<Enrollment> findByCourseInstructorId(Long instructorId);
+ // In EnrollmentDAO interface:
+    Enrollment findByStudentAndCourse(Long studentId, Long courseId);
 }

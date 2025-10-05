@@ -385,129 +385,144 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-    $(document).ready(function(){
-        // Toggle password visibility
-        window.togglePassword = function() {
-            let pw = $('#password');
-            let toggle = $('.password-toggle');
-            if(pw.attr('type') === 'password'){
-                pw.attr('type', 'text');
-                toggle.text('🙈');
-            } else {
-                pw.attr('type', 'password');
-                toggle.text('👁️');
-            }
+<script>
+$(document).ready(function(){
+    // Clear any old tokens on page load
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    localStorage.removeItem('authToken');
+
+    // Toggle password visibility
+    window.togglePassword = function() {
+        let pw = $('#password');
+        let toggle = $('.password-toggle');
+        if(pw.attr('type') === 'password'){
+            pw.attr('type', 'text');
+            toggle.text('🙈');
+        } else {
+            pw.attr('type', 'password');
+            toggle.text('👁️');
+        }
+    };
+
+    // Real-time validation clears errors
+    $('#email, #password, #userRole').on('input change', function(){
+        $(this).removeClass('error-input success-input');
+        $('#' + this.id + 'Error').hide();
+    });
+
+    // Form submit handler
+    $('#loginForm').on('submit', function(e){
+        e.preventDefault();
+
+        let email = $('#email').val().trim(),
+            password = $('#password').val(),
+            role = $('#userRole').val();
+
+        // Simple validation before AJAX:
+        let valid = true;
+        $('.error').hide();
+        $('.form-control').removeClass('error-input success-input');
+
+        if(!email){
+            $('#emailError').text('Email is required').show();
+            $('#email').addClass('error-input');
+            valid = false;
+        } else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+            $('#emailError').text('Enter a valid email').show();
+            $('#email').addClass('error-input');
+            valid = false;
+        } else {
+            $('#email').addClass('success-input');
+        }
+
+        if(!password){
+            $('#passwordError').text('Password is required').show();
+            $('#password').addClass('error-input');
+            valid = false;
+        } else if(password.length < 6){
+            $('#passwordError').text('Password must be at least 6 characters').show();
+            $('#password').addClass('error-input');
+            valid = false;
+        } else {
+            $('#password').addClass('success-input');
+        }
+
+        if(!role){
+            $('#roleError').text('Please select a role').show();
+            $('#userRole').addClass('error-input');
+            valid = false;
+        } else {
+            $('#userRole').addClass('success-input');
+        }
+
+        if(!valid) return;
+
+        // ✅ CREATE loginData object
+        const loginData = {
+            email: email,
+            password: password,
+            role: role.toUpperCase() // Convert to uppercase to match backend expectations
         };
 
-        // Real-time validation clears errors
-        $('#email, #password, #userRole').on('input change', function(){
-            $(this).removeClass('error-input success-input');
-            $('#' + this.id + 'Error').hide();
-        });
-
-        // Form submit handler
-        $('#loginForm').on('submit', function(e){
-            e.preventDefault();
-
-            let email = $('#email').val().trim(),
-                password = $('#password').val(),
-                role = $('#userRole').val();
-
-            // Simple validation before AJAX:
-            let valid = true;
-            $('.error').hide();
-            $('.form-control').removeClass('error-input success-input');
-
-            if(!email){
-                $('#emailError').text('Email is required').show();
-                $('#email').addClass('error-input');
-                valid = false;
-            } else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-                $('#emailError').text('Enter a valid email').show();
-                $('#email').addClass('error-input');
-                valid = false;
-            } else {
-                $('#email').addClass('success-input');
+        // Cookie setter helper
+        function setCookie(name, value, days){
+            let expires = "";
+            if(days){
+                let d = new Date();
+                d.setTime(d.getTime() + (days*24*60*60*1000));
+                expires = "; expires=" + d.toUTCString();
             }
+            document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+        }
 
-            if(!password){
-                $('#passwordError').text('Password is required').show();
-                $('#password').addClass('error-input');
-                valid = false;
-            } else if(password.length < 6){
-                $('#passwordError').text('Password must be at least 6 characters').show();
-                $('#password').addClass('error-input');
-                valid = false;
-            } else {
-                $('#password').addClass('success-input');
-            }
+        $('#loginButton').attr('disabled', true).text('Signing in...');
+        $('#loading').show();
 
-            if(!role){
-                $('#roleError').text('Please select a role').show();
-                $('#userRole').addClass('error-input');
-                valid = false;
-            } else {
-                $('#userRole').addClass('success-input');
-            }
-
-            if(!valid) return;
-
-            // Cookie setter helper
-            function setCookie(name, value, days){
-                let expires = "";
-                if(days){
-                    let d = new Date();
-                    d.setTime(d.getTime() + (days*24*60*60*1000));
-                    expires = "; expires=" + d.toUTCString();
-                }
-                document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
-            }
-
-            $('#loginButton').attr('disabled', true).text('Signing in...');
-            $('#loading').show();
-
-            $.ajax({
-                url: '/Secure-Online-Learning-Platform/auth/login', 
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({email: email, password: password, role: role}),
-                dataType: 'json',
-                success: function(data){
-                    $('#loading').hide();
-                    if(data.status === 'success'){
-                        setCookie('token', data.token, 1);
-                        $('#loginSuccess').show();
-                        
-                        setTimeout(function() {
-                            if(role === 'instructor'){
-                                window.location.href = '/Secure-Online-Learning-Platform/instructorDashboard';
-                            } else if(role === 'student'){
-                                window.location.href = '/Secure-Online-Learning-Platform/studentDashboard';
-                            } else {
-                                alert('Unknown user role.');
-                            }
-                        }, 1500);
+        $.ajax({
+            url: "/Secure-Online-Learning-Platform/auth/login",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(loginData), // ✅ Now loginData is defined!
+            success: function(response) {
+                $('#loading').hide();
+                if (response.status === 'success') {
+                    $('#loginSuccess').show();
+                    
+                    // ✅ CLEAR OLD TOKEN FIRST
+                    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    
+                    // ✅ SET NEW TOKEN
+                    setCookie('token', response.token, 1);
+                    
+                    // Redirect based on role
+                    if (response.role === 'INSTRUCTOR') {
+                        window.location.href = '/Secure-Online-Learning-Platform/instructorDashboard';
+                    } else if (response.role === 'STUDENT') {
+                        window.location.href = '/Secure-Online-Learning-Platform/studentDashboard';
                     } else {
-                        $('#loginError').text(data.message || 'Login failed.').show();
-                        $('#loginButton').attr('disabled', false).text('Sign In');
+                        alert('Unknown user role: ' + response.role);
                     }
-                },
-                error: function(xhr, status, error) {
-                    $('#loading').hide();
-                    let errMsg = 'Invalid Email or Password';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errMsg = xhr.responseJSON.message;
-                    } else if (xhr.status >= 500) {
-                        errMsg = 'Server error. Please try again later.';
-                    }
-                    $('#loginError').text(errMsg).show();
-                    console.error('Login failed:', error, xhr.responseText);
+                } else {
+                    $('#loginError').text(response.message || 'Login failed').show();
                     $('#loginButton').attr('disabled', false).text('Sign In');
                 }
-            });
+            },
+            error: function(xhr, status, error) {
+                $('#loading').hide();
+                let errMsg = 'Invalid Email or Password';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errMsg = xhr.responseJSON.message;
+                } else if (xhr.status >= 500) {
+                    errMsg = 'Server error. Please try again later.';
+                }
+                $('#loginError').text(errMsg).show();
+                console.error('Login failed:', error, xhr.responseText);
+                $('#loginButton').attr('disabled', false).text('Sign In');
+            }
         });
     });
-    </script>
+});
+</script>
+
 </body>
 </html>

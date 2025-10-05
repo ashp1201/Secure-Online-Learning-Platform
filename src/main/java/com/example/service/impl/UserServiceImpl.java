@@ -83,6 +83,8 @@ public class UserServiceImpl implements UserService {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
         String role = loginRequest.getRole();
+        
+        
 
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));

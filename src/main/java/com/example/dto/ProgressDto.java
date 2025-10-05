@@ -7,7 +7,6 @@ public class ProgressDto {
     private String moduleId;
     private Double completedPercent;
     private LocalDateTime lastAccessedAt;
-    private String notes;
     private Long enrollmentId;
 
     // Getters and Setters
@@ -42,14 +41,6 @@ public class ProgressDto {
 
     public void setLastAccessedAt(LocalDateTime lastAccessedAt) {
         this.lastAccessedAt = lastAccessedAt;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
     }
 
     public Long getEnrollmentId() {

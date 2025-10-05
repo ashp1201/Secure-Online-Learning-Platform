@@ -7,35 +7,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 
-/* 
- * Custom UserDetailsService implementation for Spring Security authentication.
- * Loads user information from database and converts to Spring Security UserDetails.
- */
+import org.springframework.stereotype.Service;
+
+@Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
     private UserServiceImpl userServiceImpl;
 
-    /* 
-     * Loads user by email for authentication purposes.
-     * Converts database User entity to Spring Security UserDetails format.
-     * @param email The user's email address used as username
-     * @return UserDetails object containing user credentials and authorities
-     * @throws UsernameNotFoundException if user not found with given email
-     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userServiceImpl.findByEmail(email);
+        User user = userServiceImpl.findByEmail(email);  // Changed to findByEmail
         if (user == null) {
             throw new UsernameNotFoundException("User not found with email: " + email);
         }
 
-        // prepend ROLE_ because Spring Security expects it
         String role = "ROLE_" + user.getRole().toUpperCase();
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
-                .password(user.getPasswordHash()) // must already be BCrypt encoded in DB
+                .password(user.getPasswordHash()) // must be BCrypt encoded
                 .authorities(new SimpleGrantedAuthority(role))
                 .build();
     }

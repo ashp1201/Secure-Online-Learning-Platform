@@ -412,12 +412,16 @@
                 let authToken = null;
 
                 $(document).ready(function () {
-                    authToken = getCookie('token') || localStorage.getItem('authToken');
+                	authToken = getCookie('token');
+                    
+                    console.log("Token on dashboard load:", authToken);
+                    
                     if (!authToken) {
                         alert('Please login first!');
                         window.location.href = '/Secure-Online-Learning-Platform/login';
                         return;
                     }
+                    
                     loadUserInfo();
 
                     $("#courseForm").submit(function (e) {
@@ -441,19 +445,29 @@
                 }
 
                 function loadUserInfo() {
+                    console.log("Cookie token:", getCookie('token'));
+                    console.log("LocalStorage token:", localStorage.getItem('authToken'));
+                    console.log("Using token:", authToken);
+                    
                     $.ajax({
-                        url: "/Secure-Online-Learning-Platform/auth/user/me",
+                        url: "/Secure-Online-Learning-Platform/auth/user/me?t=" + new Date().getTime(),
                         method: "GET",
-                        headers: { "Authorization": "Bearer " + authToken },
+                        headers: { 
+                            "Authorization": "Bearer " + authToken
+                        },
+                        cache: false,
                         success: function (data) {
+                            console.log("User data received:", data);
                             let displayName = data.fullName || data.email;
                             $("#instructorName").text(displayName);
                         },
-                        error: function () {
+                        error: function (xhr) {
+                            console.error("Error loading user info:", xhr);
                             $("#instructorName").text("Instructor");
                         }
                     });
                 }
+
 
                 function createCourse() {
                     const submitBtn = $("#submitBtn");

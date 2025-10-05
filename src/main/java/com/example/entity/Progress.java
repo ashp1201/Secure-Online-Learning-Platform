@@ -19,7 +19,7 @@ public class Progress {
     private String moduleId;
     private Double completedPercent;
     private LocalDateTime lastAccessedAt;
-    private String notes;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "enrollment_id", nullable = false)
@@ -51,12 +51,7 @@ public class Progress {
     public void setLastAccessedAt(LocalDateTime lastAccessedAt) {
         this.lastAccessedAt = lastAccessedAt;
     }
-    public String getNotes() {
-        return notes;
-    }
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
+
     public Enrollment getEnrollment() {
         return enrollment;
     }

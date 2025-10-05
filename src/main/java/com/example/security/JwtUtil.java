@@ -1,62 +1,50 @@
 package com.example.security;
 
-import java.security.Key;
-import java.util.Date;
-
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
-/* 
- * Utility class for JWT token operations including generation, validation, and parsing.
- * Uses HS256 algorithm with securely generated key for token signing.
- */
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
+
 @Component
 public class JwtUtil {
-    private static final Key KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private static final long EXPIRATION = 3600000; // 1 hour in milliseconds
+    private static final String SECRET = "MySuperJwtSecretKey12345678901234567890"; // 32+ chars!
+    private static final Key KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    private static final long EXPIRATION = 86400000; // 24h
 
-    /* 
-     * Generates a JWT token for the given email with expiration.
-     * Token includes subject (email) and expiration time, signed with secret key.
-     * @param email The email to embed in the token subject
-     * @return String containing the signed JWT token
-     */
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(KEY)
                 .compact();
     }
 
-    /* 
-     * Extracts email from JWT token by parsing the subject claim.
-     * Verifies token signature before extracting data.
-     * @param token The JWT token string to parse
-     * @return String containing the email from token subject, or null if invalid
-     */
     public String getEmail(String token) {
-        return Jwts.parser()
-                .setSigningKey(KEY)
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        try {
+            return Jwts.parser()
+                    .setSigningKey(KEY)
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (Exception e) {
+            System.out.println("Error extracting email: " + e.getMessage());
+            return null;
+        }
     }
 
-    /* 
-     * Validates JWT token signature and expiration time.
-     * Checks if token is properly signed and not expired.
-     * @param token The JWT token string to validate
-     * @return boolean true if token is valid, false if invalid or expired
-     */
     public boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(KEY).parseClaimsJws(token);
             return true;
+        } catch (ExpiredJwtException e) {
+            System.out.println("Token expired: " + e.getMessage());
+            return false;
         } catch (JwtException | IllegalArgumentException e) {
+            System.out.println("Token invalid: " + e.getMessage());
             return false;
         }
     }

@@ -44,8 +44,11 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         enrollmentDao.save(enrollment);
 
-        return toDto(enrollment);
+        // Fetch again, but now fully fetched with JOIN FETCH inside DAO
+        Enrollment loaded = enrollmentDao.findById(enrollment.getEnrollmentId());
+        return toDto(loaded);
     }
+
 
     @Override
     public List<EnrollmentDto> getEnrollmentsByStudent(Long studentId) {
@@ -76,7 +79,16 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         }
 
         if (enrollment.getCourse() != null) {
-            dto.setCourseTitle(enrollment.getCourse().getTitle());
+            Course course = enrollment.getCourse();
+            dto.setCourseTitle(course.getTitle());
+            dto.setCategory(course.getCategory());
+            dto.setDifficulty(course.getDifficulty());
+            dto.setDescription(course.getDescription());
+            dto.setContentPath(course.getContentPath());
+            
+            if (course.getInstructor() != null) {
+                dto.setInstructorName(course.getInstructor().getFullName());
+            }
         }
 
         // Calculate overall progress for this enrollment
@@ -85,10 +97,20 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         return dto;
     }
+
     
     @Override
     public Enrollment findById(Long enrollmentId) {
         return enrollmentDao.findById(enrollmentId);
     }
+    
+    @Override
+    public boolean isStudentEnrolled(Long userId, Long courseId) {
+        // Query the enrollment DAO for active enrollment by student and course
+        Enrollment enrollment = enrollmentDao.findByStudentAndCourse(userId, courseId);
+        return enrollment != null && "ACTIVE".equalsIgnoreCase(enrollment.getStatus());
+    }
+
+
 
 }
