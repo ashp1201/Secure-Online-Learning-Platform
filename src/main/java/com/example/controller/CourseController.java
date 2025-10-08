@@ -38,16 +38,6 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
-    @PutMapping("/{courseId}")
-    public ResponseEntity<CourseDto> updateCourse(@PathVariable Long courseId, @RequestBody CourseDto dto, Authentication authentication) {
-        User user = userService.findByEmail(authentication.getName());
-        CourseDto updatedCourse = courseService.updateCourse(dto, courseId, user.getUserId());
-        if (updatedCourse == null) {
-            return ResponseEntity.status(403).build(); // Forbidden - not owner
-        }
-        return ResponseEntity.ok(updatedCourse);
-    }
-
     @GetMapping("/{courseId}")
     public ResponseEntity<CourseDto> getCourseById(@PathVariable Long courseId) {
         CourseDto course = courseService.getCourseById(courseId);
@@ -57,46 +47,64 @@ public class CourseController {
         return ResponseEntity.ok(course);
     }
 
-    @GetMapping("/category/{category}")
-    public ResponseEntity<List<CourseDto>> getCoursesByCategory(@PathVariable String category) {
-        return ResponseEntity.ok(courseService.getCoursesByCategory(category));
+    /**
+     * Unified search/filter endpoint.
+     * Supports any combination of category, difficulty, and title filters.
+     * 
+     * Examples:
+     * - /courses/search?category=Programming
+     * - /courses/search?difficulty=Beginner
+     * - /courses/search?category=Programming&difficulty=Beginner
+     * - /courses/search?title=web
+     * - /courses/search (returns all courses)
+     */
+    @GetMapping("/search")
+    public ResponseEntity<List<CourseDto>> searchCourses(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) String title) {
+        
+        return ResponseEntity.ok(courseService.searchCourses(category, difficulty, title));
     }
 
-    @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<CourseDto>> getCoursesByDifficulty(@PathVariable String difficulty) {
-        return ResponseEntity.ok(courseService.getCoursesByDifficulty(difficulty));
-    }
-
+    /**
+     * Kept for backward compatibility - delegates to unified search
+     */
     @GetMapping("/filter")
     public ResponseEntity<List<CourseDto>> filterCourses(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String difficulty) {
-        if (category != null && difficulty != null) {
-            return ResponseEntity.ok(courseService.getCoursesByCategoryAndDifficulty(category, difficulty));
-        } else if (category != null) {
-            return ResponseEntity.ok(courseService.getCoursesByCategory(category));
-        } else if (difficulty != null) {
-            return ResponseEntity.ok(courseService.getCoursesByDifficulty(difficulty));
-        } else {
-            return ResponseEntity.ok(courseService.getAllCourses());
-        }
+        
+        return ResponseEntity.ok(courseService.searchCourses(category, difficulty, null));
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<CourseDto>> searchCourses(@RequestParam String title) {
-        return ResponseEntity.ok(courseService.searchCoursesByTitle(title));
+    @PutMapping("/{courseId}")
+    public ResponseEntity<CourseDto> updateCourse(
+            @PathVariable Long courseId, 
+            @RequestBody CourseDto dto, 
+            Authentication authentication) {
+        
+        User user = userService.findByEmail(authentication.getName());
+        CourseDto updatedCourse = courseService.updateCourse(dto, courseId, user.getUserId());
+        
+        if (updatedCourse == null) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(updatedCourse);
     }
 
     @DeleteMapping("/{courseId}")
     public ResponseEntity<?> deleteCourse(@PathVariable Long courseId, Authentication authentication) {
         User user = userService.findByEmail(authentication.getName());
         CourseDto course = courseService.getCourseById(courseId);
+        
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
         if (!course.getInstructorId().equals(user.getUserId())) {
-            return ResponseEntity.status(403).build(); // Forbidden - not owner
+            return ResponseEntity.status(403).build();
         }
+        
         courseService.deleteCourse(courseId);
         return ResponseEntity.ok().build();
     }

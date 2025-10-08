@@ -10,8 +10,7 @@ public interface CourseDAO {
     Course findById(Long id);
     List<Course> findAll();
     List<Course> findByInstructorId(Long instructorId);
-    List<Course> findByCategory(String category);
-    List<Course> findByDifficulty(String difficulty);
-    List<Course> findByCategoryAndDifficulty(String category, String difficulty);
-    List<Course> searchByTitle(String title);
+    
+    // New dynamic search method
+    List<Course> searchCourses(String category, String difficulty, String title);
 }

@@ -1,3 +1,4 @@
+// src/main/java/com/example/service/impl/UserServiceImpl.java
 package com.example.service.impl;
 
 import java.util.*;
@@ -17,6 +18,7 @@ import com.example.dto.UserDto;
 import com.example.dto.InstructorDto;
 import com.example.dto.StudentDto;
 import com.example.entity.User;
+import com.example.exception.EmailNotFoundException;
 import com.example.entity.Instructor;
 import com.example.entity.Student;
 import com.example.security.JwtUtil;
@@ -72,7 +74,7 @@ public class UserServiceImpl implements UserService {
         user.setRole(role);
         user.setFullName(userDto.getFullName());
         user.setEmail(userDto.getEmail());
-        user.setPasswordHash(userDto.getPassword()); // password encoding handled in DAO save
+        user.setPasswordHash(userDto.getPassword());
 
         userDAO.save(user);
         return user;
@@ -83,25 +85,30 @@ public class UserServiceImpl implements UserService {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
         String role = loginRequest.getRole();
-        
-        
 
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
-        } catch (BadCredentialsException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("message", "Invalid email or password"));
-        }
-
+        // ✅ CHECK IF EMAIL EXISTS FIRST (before authentication)
         User dbUser = findByEmail(email);
         if (dbUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "User not found"));
+            throw new EmailNotFoundException("Email address not registered. Please check and try again.");
         }
 
+        // ✅ NOW AUTHENTICATE
+        try {
+            authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+            );
+        } catch (BadCredentialsException ex) {
+            // Let the global handler catch this
+            throw ex;
+        }
+
+        // ✅ CHECK ROLE MISMATCH
         if (!dbUser.getRole().equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("message", "Role mismatch"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Collections.singletonMap("message", "Role mismatch. Please select the correct role."));
         }
 
+        // ✅ GENERATE TOKEN
         String token = jwtUtil.generateToken(dbUser.getEmail());
 
         Map<String, Object> response = new HashMap<>();
@@ -117,7 +124,8 @@ public class UserServiceImpl implements UserService {
         User user = findByEmail(authentication.getName());
 
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("message", "User not found"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("message", "User not found"));
         }
 
         Map<String, String> response = new HashMap<>();

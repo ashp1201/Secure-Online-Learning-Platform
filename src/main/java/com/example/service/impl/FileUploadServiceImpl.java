@@ -1,10 +1,10 @@
 package com.example.service.impl;
 
+import com.example.exception.FileTooLargeException;
 import com.example.service.FileUploadService;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,24 +26,26 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     @Override
     public String uploadFile(MultipartFile file, String uploadPath) {
+        // ✅ CHECK IF FILE IS EMPTY
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
+        // ✅ CHECK FILE SIZE (throws custom exception)
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new FileTooLargeException("File size exceeds 100 MB limit. Please upload a smaller file.");
+        }
+
+        // ✅ CHECK FILE TYPE
+        if (!isValidFileType(file.getOriginalFilename())) {
+            throw new IllegalArgumentException("Invalid file type. Allowed types: pdf, doc, docx, ppt, pptx, txt, mp4, avi, mov, zip, rar");
+        }
+
         try {
-            if (file.isEmpty()) {
-                throw new IllegalArgumentException("File is empty");
-            }
-
-            if (!isValidFileType(file.getOriginalFilename())) {
-                throw new IllegalArgumentException("Invalid file type");
-            }
-
-            if (getFileSize(file) > MAX_FILE_SIZE) {
-                throw new IllegalArgumentException("File size exceeds maximum limit");
-            }
-
             // Create upload directory if it doesn't exist
             Path uploadDir = Paths.get(uploadPath);
             if (!Files.exists(uploadDir)) {
                 Files.createDirectories(uploadDir);
-                System.out.println("Created directory structure: " + uploadDir.toAbsolutePath());
             }
 
             // Generate unique filename
@@ -57,7 +59,8 @@ public class FileUploadServiceImpl implements FileUploadService {
 
             return filePath.toString();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to upload file", e);
+            // ✅ Wrap IOException in RuntimeException so it can be caught by GlobalExceptionHandler
+            throw new RuntimeException("Failed to upload file: " + e.getMessage(), e);
         }
     }
 

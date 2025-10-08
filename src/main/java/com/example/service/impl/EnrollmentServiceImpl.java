@@ -111,6 +111,24 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         return enrollment != null && "ACTIVE".equalsIgnoreCase(enrollment.getStatus());
     }
 
+    
+    @Override
+    public void withdrawEnrollment(Long enrollmentId, String studentEmail) {
+        // Find the enrollment
+        Enrollment enrollment = enrollmentDao.findById(enrollmentId);
+        
+        if (enrollment == null) {
+            throw new RuntimeException("Enrollment not found");
+        }
+
+        // Verify ownership - only the enrolled student can withdraw
+        if (!enrollment.getStudent().getEmail().equals(studentEmail)) {
+            throw new RuntimeException("You are not authorized to withdraw this enrollment");
+        }
+
+        // Delete the enrollment
+        enrollmentDao.delete(enrollmentId);
+    }
 
 
 }

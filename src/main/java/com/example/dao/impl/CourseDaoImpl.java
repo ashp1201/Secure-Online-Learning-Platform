@@ -5,6 +5,9 @@ import com.example.entity.Course;
 import com.example.helper.HibernateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -53,68 +56,63 @@ public class CourseDaoImpl implements CourseDAO {
     @Override
     public List<Course> findAll() {
         return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course c LEFT JOIN FETCH c.instructor", Course.class).getResultList()
+            session.createQuery("FROM Course c LEFT JOIN FETCH c.instructor", Course.class)
+                .getResultList()
         );
     }
 
     @Override
     public List<Course> findByInstructorId(Long instructorId) {
-        return hibernateUtil.executeReadOnly(session -> session.createQuery(
-            "select c from Course c " +
-            "left join fetch c.enrollments " +
-            "left join fetch c.instructor " +
-            "where c.instructor.userId = :iid", Course.class)
-            .setParameter("iid", instructorId)
-            .getResultList()
-        );
-    }
-
-
-
-
-    @Override
-    public List<Course> findByCategory(String category) {
-        return hibernateUtil.executeReadOnly(session ->
+        return hibernateUtil.executeReadOnly(session -> 
             session.createQuery(
                 "SELECT c FROM Course c " +
-                "LEFT JOIN FETCH c.instructor " + // ADD THIS!
-                "WHERE c.category = :category", Course.class)
-                .setParameter("category", category)
+                "LEFT JOIN FETCH c.instructor " +
+                "WHERE c.instructor.userId = :iid", Course.class)
+                .setParameter("iid", instructorId)
                 .getResultList()
         );
     }
 
+    /**
+     * Dynamic search method using Criteria API.
+     * Handles any combination of category, difficulty, and title filters.
+     * All parameters are optional - pass null to ignore that filter.
+     */
     @Override
-    public List<Course> findByDifficulty(String difficulty) {
-        return hibernateUtil.executeReadOnly(session ->
-            session.createQuery(
-                "SELECT c FROM Course c " +
-                "LEFT JOIN FETCH c.instructor " + // ADD THIS!
-                "WHERE c.difficulty = :difficulty", Course.class)
-                .setParameter("difficulty", difficulty)
-                .getResultList()
-        );
-    }
-
-    @Override
-    public List<Course> findByCategoryAndDifficulty(String category, String difficulty) {
-        return hibernateUtil.executeReadOnly(session ->
-            session.createQuery(
-                "SELECT c FROM Course c " +
-                "LEFT JOIN FETCH c.instructor " + // ADD THIS!
-                "WHERE c.category = :category AND c.difficulty = :difficulty", Course.class)
-                .setParameter("category", category)
-                .setParameter("difficulty", difficulty)
-                .getResultList()
-        );
-    }
-
-    @Override
-    public List<Course> searchByTitle(String title) {
-        return hibernateUtil.executeReadOnly(session ->
-            session.createQuery("FROM Course c WHERE LOWER(c.title) LIKE LOWER(:title)", Course.class)
-                .setParameter("title", "%" + title + "%")
-                .getResultList()
-        );
+    public List<Course> searchCourses(String category, String difficulty, String title) {
+        return hibernateUtil.executeReadOnly(session -> {
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaQuery<Course> cq = cb.createQuery(Course.class);
+            Root<Course> course = cq.from(Course.class);
+            
+            // Always fetch instructor to avoid LazyInitializationException
+            course.fetch("instructor", JoinType.LEFT);
+            
+            // Build dynamic predicates based on provided parameters
+            List<Predicate> predicates = new ArrayList<>();
+            
+            if (category != null && !category.trim().isEmpty()) {
+                predicates.add(cb.equal(course.get("category"), category));
+            }
+            
+            if (difficulty != null && !difficulty.trim().isEmpty()) {
+                predicates.add(cb.equal(course.get("difficulty"), difficulty));
+            }
+            
+            if (title != null && !title.trim().isEmpty()) {
+                predicates.add(
+                    cb.like(cb.lower(course.get("title")), "%" + title.toLowerCase() + "%")
+                );
+            }
+            
+            // Apply predicates if any exist
+            if (!predicates.isEmpty()) {
+                cq.where(cb.and(predicates.toArray(new Predicate[0])));
+            }
+            
+            cq.select(course);
+            
+            return session.createQuery(cq).getResultList();
+        });
     }
 }

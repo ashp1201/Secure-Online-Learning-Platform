@@ -251,6 +251,22 @@
             cursor: not-allowed;
         }
 
+        /* ✅ Add Danger Button Styles */
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-outline {
             background: white;
             border: 2px solid #667eea;
@@ -521,26 +537,21 @@
 
     function loadUserInfo() {
         $.ajax({
-            url: "/Secure-Online-Learning-Platform/auth/user/me?t=" + new Date().getTime(), // Add timestamp to prevent caching
+            url: "/Secure-Online-Learning-Platform/auth/user/me?t=" + new Date().getTime(),
             method: "GET",
             headers: { 
                 "Authorization": "Bearer " + authToken
             },
-            cache: false, // Disable jQuery cache
+            cache: false,
             success: function (data) {
                 let displayName = data.fullName || data.email;
-                // For Student Dashboard:
                 $("#studentName").text(displayName);
- 
             },
             error: function () {
-                // For Student Dashboard:
                 $("#studentName").text("Student");
-             
             }
         });
     }
-
 
     function loadEnrolledCourseIds() {
         $.ajax({
@@ -586,18 +597,21 @@
         const coursesList = $("#coursesList");
         coursesList.html("<p>Searching courses...</p>");
 
-        let url = "/Secure-Online-Learning-Platform/courses/filter?";
-        if (category) url += "category=" + encodeURIComponent(category) + "&";
-        if (difficulty) url += "difficulty=" + encodeURIComponent(difficulty);
+        let params = [];
+        if (category) params.push("category=" + encodeURIComponent(category));
+        if (difficulty) params.push("difficulty=" + encodeURIComponent(difficulty));
+        if (searchTerm) params.push("title=" + encodeURIComponent(searchTerm));
+        
+        let url = "/Secure-Online-Learning-Platform/courses/search";
+        if (params.length > 0) {
+            url += "?" + params.join("&");
+        }
 
         $.ajax({
             url: url,
             method: "GET",
             headers: { "Authorization": "Bearer " + authToken },
             success: function (courses) {
-                if (searchTerm) {
-                    courses = courses.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()));
-                }
                 displayCourses(courses, coursesList, false);
             },
             error: function () {
@@ -606,6 +620,7 @@
         });
     }
 
+    // ✅ UPDATED: Add withdraw button to enrolled courses
     function displayCourses(courses, container, isEnrolledView) {
         container.html("");
         if (!courses || courses.length === 0) {
@@ -637,15 +652,23 @@
                     </div>
                 </div>
                 <div class="course-description">${escapeHtml(course.description)}</div>
+                
                 ${isEnrolledView && course.contentPath ? renderVideoPlayer(course.courseId, course.contentPath) : ''}
-                ${!isEnrolledView ? 
+                
+                ${isEnrolledView ? 
+                    `<div class="course-actions">
+                        <button class="btn btn-danger btn-small" onclick="withdrawFromCourse(${enrollmentMap[course.courseId]}, '${escapeHtml(course.title).replace(/'/g, "\\'")}')">
+                            <i class="fas fa-sign-out-alt"></i> Withdraw
+                        </button>
+                    </div>` 
+                    : 
                     `<div class="course-actions">
                         ${isEnrolled ? '' :
                             `<button class="btn btn-primary btn-small" onclick="enrollCourse(${course.courseId})" id="enroll-btn-${course.courseId}">
                                 <i class="fas fa-plus"></i> Enroll Now
                             </button>`
                         }
-                    </div>` : ''
+                    </div>`
                 }
             </div>`;
             container.append(courseCard);
@@ -682,7 +705,6 @@
         const duration = video.duration;
         const watchedPercent = (currentTime / duration) * 100;
         
-        // Update every 5 seconds
         const now = Date.now();
         const lastUpdate = parseInt(video.dataset.lastUpdate || 0);
         
@@ -812,6 +834,41 @@
             error: function (xhr) {
                 showAlert(xhr.responseText || 'Failed to enroll in course', 'error');
                 enrollBtn.prop('disabled', false).html('<i class="fas fa-plus"></i> Enroll Now');
+            }
+        });
+    }
+
+    // ✅ ADD WITHDRAW FUNCTION
+    function withdrawFromCourse(enrollmentId, courseTitle) {
+        if (!confirm(`Are you sure you want to withdraw from "${courseTitle}"?\n\nYour progress will be lost.`)) {
+            return;
+        }
+
+        $.ajax({
+            url: `/Secure-Online-Learning-Platform/enrollments/${enrollmentId}`,
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + authToken },
+            success: function() {
+                showAlert('Successfully withdrawn from course', 'success');
+                
+                // Remove from enrolled list
+                const courseId = Object.keys(enrollmentMap).find(key => enrollmentMap[key] === enrollmentId);
+                if (courseId) {
+                    enrolledCourseIds = enrolledCourseIds.filter(id => id != courseId);
+                    delete enrollmentMap[courseId];
+                }
+                
+                // Refresh enrolled courses
+                loadEnrolledCourses();
+                
+                // If on browse tab, refresh that too
+                if ($('#browse-courses').hasClass('active')) {
+                    loadAvailableCourses();
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.error || xhr.responseText || 'Failed to withdraw from course';
+                showAlert(errorMsg, 'error');
             }
         });
     }

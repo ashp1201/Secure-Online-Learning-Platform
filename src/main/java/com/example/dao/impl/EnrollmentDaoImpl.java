@@ -34,11 +34,13 @@ public class EnrollmentDaoImpl implements EnrollmentDAO {
     public void delete(Long enrollmentId) {
         hibernateUtil.executeInTransaction(session -> {
             Enrollment enrollment = session.get(Enrollment.class, enrollmentId);
-            if (enrollment != null) session.delete(enrollment);
+            if (enrollment != null) {
+                session.delete(enrollment);
+            }
             return null;
         });
     }
-
+    
     @Override
     public Enrollment findById(Long id) {
         return hibernateUtil.executeReadOnly(session ->

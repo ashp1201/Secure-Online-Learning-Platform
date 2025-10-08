@@ -9,7 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/enrollments")
@@ -51,4 +54,18 @@ public class EnrollmentController {
         }
         return ResponseEntity.ok(enrollmentService.getEnrollmentsByInstructor(instructor.getUserId()));
     }
-}
+    
+    @DeleteMapping("/{enrollmentId}")
+    public ResponseEntity<?> withdrawEnrollment(
+            @PathVariable Long enrollmentId, 
+            Authentication authentication) {
+        
+        try {
+            enrollmentService.withdrawEnrollment(enrollmentId, authentication.getName());
+            return ResponseEntity.ok(Collections.singletonMap("message", "Successfully withdrawn from course"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(Collections.singletonMap("error", e.getMessage()));
+        }
+    }
+
+    }

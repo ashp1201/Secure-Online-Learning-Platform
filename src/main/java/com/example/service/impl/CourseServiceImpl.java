@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class CourseServiceImpl implements CourseService {
+    
     @Autowired
     private CourseDAO courseDao;
 
@@ -32,7 +33,7 @@ public class CourseServiceImpl implements CourseService {
         course.setDifficulty(dto.getDifficulty());
         course.setContentPath(dto.getContentPath());
         course.setInstructor(instructor);
-        course.setCreatedAt(LocalDateTime.now()); // Set createdAt WHEN SAVING
+        course.setCreatedAt(LocalDateTime.now());
 
         courseDao.save(course);
 
@@ -61,7 +62,7 @@ public class CourseServiceImpl implements CourseService {
     public CourseDto updateCourse(CourseDto dto, Long courseId, Long instructorId) {
         Course course = courseDao.findById(courseId);
         if (course == null || !course.getInstructor().getUserId().equals(instructorId)) {
-            return null; // Course not found or not owned by instructor
+            return null;
         }
 
         course.setTitle(dto.getTitle());
@@ -75,38 +76,6 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<CourseDto> getCoursesByCategory(String category) {
-        return courseDao.findByCategory(category)
-            .stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CourseDto> getCoursesByDifficulty(String difficulty) {
-        return courseDao.findByDifficulty(difficulty)
-            .stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CourseDto> getCoursesByCategoryAndDifficulty(String category, String difficulty) {
-        return courseDao.findByCategoryAndDifficulty(category, difficulty)
-            .stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CourseDto> searchCoursesByTitle(String title) {
-        return courseDao.searchByTitle(title)
-            .stream()
-            .map(this::toDto)
-            .collect(Collectors.toList());
-    }
-
-    @Override
     public CourseDto getCourseById(Long courseId) {
         Course course = courseDao.findById(courseId);
         return course != null ? toDto(course) : null;
@@ -115,6 +84,18 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public void deleteCourse(Long courseId) {
         courseDao.delete(courseId);
+    }
+
+    /**
+     * Unified search method that handles all filter combinations.
+     * Pass null for any parameter to ignore that filter.
+     */
+    @Override
+    public List<CourseDto> searchCourses(String category, String difficulty, String title) {
+        return courseDao.searchCourses(category, difficulty, title)
+            .stream()
+            .map(this::toDto)
+            .collect(Collectors.toList());
     }
 
     private CourseDto toDto(Course course) {
@@ -128,7 +109,9 @@ public class CourseServiceImpl implements CourseService {
         dto.setCreatedAt(course.getCreatedAt());
         dto.setInstructorId(course.getInstructor() != null ? course.getInstructor().getUserId() : null);
         dto.setInstructorName(course.getInstructor() != null ? course.getInstructor().getFullName() : null);
-        if (course.getEnrollments() != null) dto.setEnrollmentCount(course.getEnrollments().size());
+        if (course.getEnrollments() != null) {
+            dto.setEnrollmentCount(course.getEnrollments().size());
+        }
         return dto;
     }
 }
